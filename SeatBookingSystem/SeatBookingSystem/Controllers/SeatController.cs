@@ -8,6 +8,7 @@ using System.Web.Mvc;
 using SeatBookingSystem.Attributes;
 using SeatBookingSystem.Common;
 using SeatBookingSystem.Entities;
+using SeatBookingSystem.Models;
 
 namespace SeatBookingSystem.Controllers
 {
@@ -18,81 +19,226 @@ namespace SeatBookingSystem.Controllers
     [ExceptionHandler]
     public class SeatController : Controller
     {
-        private static SeatBookingContext context = SeatBookingContext.Create();
-        private static Lazy<EntityRepository<Seat>> lazySeatRepo = new Lazy<EntityRepository<Seat>>(() => EntityRepository<Seat>.Create(context));
-
+        /// <summary>
+        /// The seat controller constructor
+        /// </summary>
         public SeatController()
         {
-            if (lazySeatRepo.Value.GetAll().Count < 1)
-            {
-                InitSeats(Consts.SeatRowNum, Consts.SeatRowNum);
-            }
+            InitializeSeatsWhenFirstRun(Consts.SeatRowNum, Consts.SeatRowNum);
         }
 
         /// <summary>
         /// The index entry
         /// </summary>
+        [AllowAnonymous]
         public ActionResult Index()
         {
             return View();
         }
 
         /// <summary>
-        /// Gets the booked seats.
+        /// The book entry
         /// </summary>
-        /// <returns>The all seats</returns>
-        [HttpGet]
-        public async Task<ActionResult> GetBookedSeats()
+        public ActionResult Book()
         {
-            var allBookedSeats = lazySeatRepo.Value.GetEntities(seat => !string.IsNullOrEmpty(seat.OwnerId));
-            string userId = GetCurrentUserId();
-            var seatsOfUser = allBookedSeats.Where(seat => seat.OwnerId == userId).ToList(); ;
-            await Task.FromResult(0).ConfigureAwait(false);
+            return View();
+        }
 
-            var result = new
+        /// <summary>
+        /// The realease entry
+        /// </summary>
+        public ActionResult Release()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Gets all the booked seats.
+        /// </summary>
+        /// <returns>The all booked seats</returns>
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<ActionResult> GetAllBookedSeats(int meetupId = 0)
+        {
+            var allSeatsBooked = new List<Seat>();
+            using (var context = SeatBookingContext.Create())
             {
-                SeatsBookedByOthers = allBookedSeats.Except(seatsOfUser).ToList(),
-                SeatsBookedByCurrentUser = seatsOfUser
-            };
+                var meetup = context.Meetups.FirstOrDefault(
+                    m => meetupId == 0 ? m.Location == Consts.DefaultMeetupLocation : m.Id == meetupId);
+                if (meetup == null)
+                {
+                    throw new InvalidOperationException("The meetup is not existing!");
+                }
 
-            return this.NewtonsoftJson(result);
+                allSeatsBooked = meetup.Seats.Where(s => s.TransactionId != null).ToList();
+                if (allSeatsBooked.Any())
+                {
+                    return this.NewtonsoftJson(allSeatsBooked);
+                }
+            }
+
+            await Task.FromResult(0).ConfigureAwait(false);
+            return new HttpStatusCodeResult(HttpStatusCode.OK);
+        }
+
+        /// <summary>
+        /// Gets the current user booked seats.
+        /// </summary>
+        /// <param name="accounter">The accounter.</param>
+        /// <param name="meetupId">The meetup identity</param>
+        /// <returns>The user booked seats</returns>
+        public async Task<ActionResult> GetUserBookedSeats(int meetupId, string accounter = null)
+        {
+            List<Seat> seats = new List<Seat>();
+            using (var context = SeatBookingContext.Create())
+            {
+                var meetup = context.Meetups.FirstOrDefault(
+                    m => meetupId == 0 ? m.Location == Consts.DefaultMeetupLocation : m.Id == meetupId);
+                if (meetup == null)
+                {
+                    throw new InvalidOperationException("The meetup is not existing!");
+                }
+
+                var user = !string.IsNullOrEmpty(accounter) ?
+                    context.Users.FirstOrDefault(u => u.UserName == accounter) : GetCurrentUser();
+
+                if (user != null)
+                {
+                    seats = meetup.Seats.Where(
+                        s => s.Transaction != null && s.Transaction.Accounter != null && s.Transaction.Accounter.UserName == user.UserName).ToList();
+                }
+
+                if (seats.Any())
+                {
+                    return this.NewtonsoftJson(seats);
+                }
+            }
+
+            await Task.FromResult(0).ConfigureAwait(false);
+            return new HttpStatusCodeResult(HttpStatusCode.OK);
         }
 
         /// <summary>
         /// Books the seats.
         /// </summary>
-        /// <param name="bookingSeatIds">The seats that are being booked.</param>
-        /// <param name="releasingSeatIds">The seats that are being released.</param>
-        /// <returns>The update result</returns>
+        /// <param name="models">The seats.</param>
+        /// <param name="meetupId">The meetup identity.</param>
+        /// <param name="accounter">The accounter.</param>
+        /// <returns>The seats booking result</returns>
         [HttpPost]
-        public async Task<ActionResult> Update(string[] bookingSeatIds, string[] releasingSeatIds)
+        [AllowAnonymous]
+        public async Task<ActionResult> BookSeats(SeatViewModel[] models, int meetupId = 0, string accounter = null)
         {
-            var booingSeats = new List<Seat>();
-            var releasingSeats = new List<Seat>();
-
-            if (bookingSeatIds != null && bookingSeatIds.Length > 0)
+            using (var context = SeatBookingContext.Create())
             {
-                string userId = this.GetCurrentUserId();
-                booingSeats = lazySeatRepo.Value.GetEntities(seat => bookingSeatIds.Contains(seat.ID)).ToList();
-                if (booingSeats.Any(seat => seat.OwnerId != userId && !string.IsNullOrEmpty(seat.OwnerId)))
+                if (models.IsNullOrEmpty())
                 {
-                    var names = new StringBuilder();
-                    var seatsOfOthers = booingSeats.Where(seat => seat.OwnerId != userId).ToList();
-                    seatsOfOthers.ForEach(s => names.Append(string.Format("[{0}]", s.ID)));
-                    string errorMsg = string.Format("{0} has/have already been booked by others, please book other seats!", booingSeats.ToString());
+                    throw new InvalidOperationException("No seats are selected!");
+                }
+
+                if (models.Length > Consts.MaxCountOfOneTransaction)
+                {
+                    throw new InvalidOperationException("Can't book more than four seats on one transaction!");
+                }
+
+                var meetup = context.Meetups.FirstOrDefault(
+                    m => meetupId == 0 ? m.Location == Consts.DefaultMeetupLocation : m.Id == meetupId);
+                if (meetup == null)
+                {
+                    throw new InvalidOperationException("The meetup is not existing!");
+                }
+
+                if (models.Any(x => string.IsNullOrEmpty(x.Email) || string.IsNullOrEmpty(x.Name)))
+                {
+                    throw new InvalidOperationException("There are seats of missing at least the followings [Owner|Email]");
+                }
+
+                var seats = meetup.Seats.Where(s => models.Any(m => m.Name == s.Name)).ToList();
+                if (seats.Any(s => s.Owner != null && !string.IsNullOrEmpty(s.Owner.Name)))
+                {
+                    throw new InvalidOperationException(
+                        string.Format("[{0}] has already been booked!",
+                        string.Join(",", seats.Where(s => !string.IsNullOrEmpty(s.Owner.Name)).Select(x => x.Name))));
+                }
+
+                var duplicates = meetup.Seats.Where(x => x.Owner != null).ToList().Where(
+                    x => models.Any(m => m.Owner.ToLower() == x.Owner.Name.ToLower() || m.Email.ToLower() == x.Owner.Email.ToLower())).ToList();
+                if (duplicates.Any())
+                {
+                    string errorMsg = string.Format("[{0}] has duplicate email or name with others", string.Join(",", duplicates.Select(x => x.Owner.Name)));
                     throw new InvalidOperationException(errorMsg);
                 }
 
-                booingSeats.ForEach(seat => seat.OwnerId = userId);
+                var user = !string.IsNullOrEmpty(accounter) ?
+                               context.Users.FirstOrDefault(u => u.UserName == accounter) : GetCurrentUser();
+                if (user == null)
+                {
+                    throw new InvalidOperationException("Can't book seat since the accounter is not valid!");
+                }
+
+                var transaction = new Transaction
+                {
+                    Id = Guid.NewGuid(),
+                    AccounterId = user.Id,
+                };
+
+                context.Set<Transaction>().Add(transaction);
+                seats.ForEach(s => s.TransactionId = transaction.Id);
+                seats.ForEach(s =>
+                {
+                    var seatModel = models.FirstOrDefault(m => m.Name == s.Name);
+                    var owner = new Owner
+                    {
+                        Name = seatModel.Owner,
+                        Email = seatModel.Email
+                    };
+                    context.Set<Owner>().Add(owner);
+                    s.Owner = owner;
+                });
+
+                context.SaveChanges();
             }
 
-            if (releasingSeatIds != null && releasingSeatIds.Length > 0)
+            await Task.FromResult(0).ConfigureAwait(false);
+            return new HttpStatusCodeResult(HttpStatusCode.OK);
+        }
+
+        /// <summary>
+        /// Books the seats.
+        /// </summary>
+        /// <param name="seatNames">The seats.</param>
+        /// <param name="meetupId">The meetup identity.</param>
+        /// <returns>The release result</returns>
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ActionResult> ReleaseSeats(string[] seatNames, int meetupId = 0, string accounter = null)
+        {
+            using (var context = SeatBookingContext.Create())
             {
-                releasingSeats = lazySeatRepo.Value.GetEntities(seat => releasingSeatIds.Contains(seat.ID)).ToList();
-                releasingSeats.ForEach(seat => seat.OwnerId = null);
-            }
+                var meetup = context.Meetups.FirstOrDefault(
+                                   m => meetupId == 0 ? m.Location == Consts.DefaultMeetupLocation : m.Id == meetupId);
+                if (meetup == null)
+                {
+                    throw new InvalidOperationException("The meetup is not existing!");
+                }
 
-            context.SaveChanges();
+                var user = !string.IsNullOrEmpty(accounter) ?
+                               context.Users.FirstOrDefault(u => u.UserName == accounter) : GetCurrentUser();
+                if (user == null)
+                {
+                    throw new InvalidOperationException("Can't book seat since the accounter is not valid!");
+                }
+
+                var seats = meetup.Seats.Where(x => seatNames.Contains(x.Name)).ToList();
+                foreach (var seat in seats)
+                {
+                    seat.Owner = null;
+                    seat.OwnerId = null;
+                    seat.TransactionId = null;
+                }
+
+                context.SaveChanges();
+            }
 
             await Task.FromResult(0).ConfigureAwait(false);
             return new HttpStatusCodeResult(HttpStatusCode.OK);
@@ -101,32 +247,58 @@ namespace SeatBookingSystem.Controllers
         /// <summary>
         /// Initialize the seats
         /// </summary>
+        /// <param name="rowNum">The number of row of meetup space.</param>
+        /// <param name="colNum">The number of column of meetup space.</param>
         /// <returns>The seats</returns>
-        private void InitSeats(int seatRow, int seatColumn)
+        private void InitializeSeatsWhenFirstRun(int rowNum, int colNum)
         {
-            List<string> seatIds = new List<string>();
-            for (int c = 0; c < seatColumn; c++)
+            using (var context = SeatBookingContext.Create())
             {
-                for (int r = 1; r <= seatRow; r++)
+                if (context.Meetups.IsNullOrEmpty())
                 {
-                    seatIds.Add(string.Format("{0}{1}", Consts.ColSeatNames[c], r));
+                    var meetup = context.Meetups.FirstOrDefault();
+                    if (meetup == null)
+                    {
+                        meetup = new Meetup
+                        {
+                            Location = Consts.DefaultMeetupLocation,
+                            Time = DateTime.Now,
+                        };
+
+                        context.Meetups.Add(meetup);
+                    }
+
+                    List<string> seatNames = new List<string>();
+                    for (int c = 0; c < colNum; c++)
+                    {
+                        for (int r = 1; r <= rowNum; r++)
+                        {
+                            seatNames.Add(string.Format("{0}{1}", Consts.ColSeatNames[c], r));
+                        }
+                    }
+
+                    var seats = seatNames.Select(name => new Seat { Name = name, MeetupId = meetup.Id, OwnerId = null, TransactionId = null }).ToList();
+                    context.Seats.AddRange(seats);
+                    context.SaveChanges();
                 }
             }
-
-            var seats = seatIds.Select(id => new Seat { ID = id }).ToList();
-            lazySeatRepo.Value.AddEntites(seats);
         }
 
         /// <summary>
-        /// Gets the current user identity.
+        /// Gets the current user.
         /// </summary>
-        /// <returns>The current user identity</returns>
-        private string GetCurrentUserId()
+        /// <returns>The current user</returns>
+        private User GetCurrentUser()
         {
-            var userName = this.HttpContext.User.Identity.Name;
-            var userId = context.Users.Where(x => x.UserName == userName).FirstOrDefault().Id;
+            if (this.HttpContext.User != null)
+            {
+                using (var context = SeatBookingContext.Create())
+                {
+                    return context.Users.Where(x => x.UserName == this.HttpContext.User.Identity.Name).FirstOrDefault();
+                }
+            }
 
-            return userId;
+            return null;
         }
     }
 }

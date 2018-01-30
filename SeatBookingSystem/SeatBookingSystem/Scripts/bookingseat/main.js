@@ -27,3 +27,18 @@ seatBooking.config(["$httpProvider", function ($httpProvider) {
 
     $httpProvider.interceptors.push("httpProviderInterceptor");
 }]);
+
+var meetup = {
+    seats: []
+};
+(function () {
+    var row = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+          col = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    for (var r = 0; r < row.length; r++) {
+        var names = [];
+        for (var c = 1; c < col.length; c++) {
+            names.push(row[r] + c);
+        }
+        meetup.seats.push(names);
+    }
+})()

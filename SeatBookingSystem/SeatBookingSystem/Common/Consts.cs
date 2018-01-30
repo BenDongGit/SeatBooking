@@ -15,5 +15,9 @@ namespace SeatBookingSystem.Common
         public static int SeatRowNum = 10;
 
         public static int SeatColNum = 10;
+
+        public static int MaxCountOfOneTransaction = 4;
+
+        public static string DefaultMeetupLocation = "Default";
     }
 }

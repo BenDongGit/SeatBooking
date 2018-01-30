@@ -138,7 +138,7 @@ namespace SeatBookingSystem.Controllers
                 if (result.Succeeded)
                 {
                     await SignInManager.SignInAsync(user, isPersistent:false, rememberBrowser:false);
-                    return RedirectToAction("Index", "Seat");
+                    return RedirectToAction("Book", "Seat");
                 }
                 AddErrors(result);
             }
@@ -380,7 +380,7 @@ namespace SeatBookingSystem.Controllers
             {
                 return Redirect(returnUrl);
             }
-            return RedirectToAction("Index", "Seat");
+            return RedirectToAction("Book", "Seat");
         }
 
         internal class ChallengeResult : HttpUnauthorizedResult
