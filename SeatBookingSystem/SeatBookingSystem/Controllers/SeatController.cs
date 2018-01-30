@@ -24,6 +24,7 @@ namespace SeatBookingSystem.Controllers
         /// </summary>
         public SeatController()
         {
+            // This is for test use, later if we add the page to create meetup then remove this method
             InitializeSeatsWhenFirstRun(Consts.SeatRowNum, Consts.SeatRowNum);
         }
 
@@ -55,14 +56,15 @@ namespace SeatBookingSystem.Controllers
         /// <summary>
         /// Gets all the booked seats.
         /// </summary>
+        /// <param name="meetupId">The meetup identity</param>
         /// <returns>The all booked seats</returns>
         [HttpGet]
         [AllowAnonymous]
         public async Task<ActionResult> GetAllBookedSeats(int meetupId = 0)
         {
-            var allSeatsBooked = new List<Seat>();
             using (var context = SeatBookingContext.Create())
             {
+                var allSeatsBooked = new List<Seat>();
                 var meetup = context.Meetups.FirstOrDefault(
                     m => meetupId == 0 ? m.Location == Consts.DefaultMeetupLocation : m.Id == meetupId);
                 if (meetup == null)
@@ -71,27 +73,23 @@ namespace SeatBookingSystem.Controllers
                 }
 
                 allSeatsBooked = meetup.Seats.Where(s => s.TransactionId != null).ToList();
-                if (allSeatsBooked.Any())
-                {
-                    return this.NewtonsoftJson(allSeatsBooked);
-                }
-            }
 
-            await Task.FromResult(0).ConfigureAwait(false);
-            return new HttpStatusCodeResult(HttpStatusCode.OK);
+                await Task.FromResult(0).ConfigureAwait(false);
+                return this.NewtonsoftJson(allSeatsBooked);
+            }
         }
 
         /// <summary>
         /// Gets the current user booked seats.
         /// </summary>
-        /// <param name="accounter">The accounter.</param>
+        /// <param name="accounter">The accounter name.</param>
         /// <param name="meetupId">The meetup identity</param>
-        /// <returns>The user booked seats</returns>
-        public async Task<ActionResult> GetUserBookedSeats(int meetupId, string accounter = null)
+        /// <returns>The booked seats of the accounter</returns>
+        public async Task<ActionResult> GetUserBookedSeats(int meetupId = 0, string accounter = null)
         {
-            List<Seat> seats = new List<Seat>();
             using (var context = SeatBookingContext.Create())
             {
+                List<Seat> seats = new List<Seat>();
                 var meetup = context.Meetups.FirstOrDefault(
                     m => meetupId == 0 ? m.Location == Consts.DefaultMeetupLocation : m.Id == meetupId);
                 if (meetup == null)
@@ -108,14 +106,9 @@ namespace SeatBookingSystem.Controllers
                         s => s.Transaction != null && s.Transaction.Accounter != null && s.Transaction.Accounter.UserName == user.UserName).ToList();
                 }
 
-                if (seats.Any())
-                {
-                    return this.NewtonsoftJson(seats);
-                }
+                await Task.FromResult(0).ConfigureAwait(false);
+                return this.NewtonsoftJson(seats);
             }
-
-            await Task.FromResult(0).ConfigureAwait(false);
-            return new HttpStatusCodeResult(HttpStatusCode.OK);
         }
 
         /// <summary>
@@ -123,7 +116,7 @@ namespace SeatBookingSystem.Controllers
         /// </summary>
         /// <param name="models">The seats.</param>
         /// <param name="meetupId">The meetup identity.</param>
-        /// <param name="accounter">The accounter.</param>
+        /// <param name="accounter">The accounter name.</param>
         /// <returns>The seats booking result</returns>
         [HttpPost]
         [AllowAnonymous]
@@ -186,21 +179,22 @@ namespace SeatBookingSystem.Controllers
                 seats.ForEach(s => s.TransactionId = transaction.Id);
                 seats.ForEach(s =>
                 {
-                    var seatModel = models.FirstOrDefault(m => m.Name == s.Name);
+                    var model = models.FirstOrDefault(m => m.Name == s.Name);
                     var owner = new Owner
                     {
-                        Name = seatModel.Owner,
-                        Email = seatModel.Email
+                        Name = model.Owner,
+                        Email = model.Email
                     };
+
                     context.Set<Owner>().Add(owner);
                     s.Owner = owner;
                 });
 
                 context.SaveChanges();
-            }
 
-            await Task.FromResult(0).ConfigureAwait(false);
-            return new HttpStatusCodeResult(HttpStatusCode.OK);
+                await Task.FromResult(0).ConfigureAwait(false);
+                return new HttpStatusCodeResult(HttpStatusCode.OK);
+            }
         }
 
         /// <summary>
@@ -226,22 +220,21 @@ namespace SeatBookingSystem.Controllers
                                context.Users.FirstOrDefault(u => u.UserName == accounter) : GetCurrentUser();
                 if (user == null)
                 {
-                    throw new InvalidOperationException("Can't book seat since the accounter is not valid!");
+                    throw new InvalidOperationException("Can't release seats since the accounter is not valid!");
                 }
 
                 var seats = meetup.Seats.Where(x => seatNames.Contains(x.Name)).ToList();
                 foreach (var seat in seats)
                 {
-                    seat.Owner = null;
                     seat.OwnerId = null;
                     seat.TransactionId = null;
                 }
 
                 context.SaveChanges();
-            }
 
-            await Task.FromResult(0).ConfigureAwait(false);
-            return new HttpStatusCodeResult(HttpStatusCode.OK);
+                await Task.FromResult(0).ConfigureAwait(false);
+                return new HttpStatusCodeResult(HttpStatusCode.OK);
+            }
         }
 
         /// <summary>
@@ -277,7 +270,13 @@ namespace SeatBookingSystem.Controllers
                         }
                     }
 
-                    var seats = seatNames.Select(name => new Seat { Name = name, MeetupId = meetup.Id, OwnerId = null, TransactionId = null }).ToList();
+                    var seats = seatNames.Select(name =>
+                        new Seat
+                        {
+                            Name = name,
+                            MeetupId = meetup.Id
+                        }).ToList();
+
                     context.Seats.AddRange(seats);
                     context.SaveChanges();
                 }

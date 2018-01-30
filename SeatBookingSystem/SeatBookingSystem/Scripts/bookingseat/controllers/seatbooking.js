@@ -79,6 +79,11 @@
                     return;
                 }
 
+                if ($scope.data.seats.selected.length > 3) {
+                    alert("A single person can't book up more than four seats in one transaction!");
+                    return;
+                }
+
                 var spliced = false;
                 $scope.data.seats.selected.map(function (selected, index) {
                     if (selected.name == name) {

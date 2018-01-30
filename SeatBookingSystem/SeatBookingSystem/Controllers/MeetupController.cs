@@ -23,9 +23,9 @@ namespace SeatBookingSystem.Controllers
         /// <returns>The meetup</returns>
         public ActionResult Get(string location, DateTimeOffset time)
         {
-            var meetup = default(Meetup);
             using (SeatBookingContext context = SeatBookingContext.Create())
             {
+                var meetup = default(Meetup);
                 if (!string.IsNullOrEmpty(location) && location == Consts.DefaultMeetupLocation)
                 {
                     meetup = context.Meetups.FirstOrDefault(m => m.Location == Consts.DefaultMeetupLocation);
@@ -37,13 +37,13 @@ namespace SeatBookingSystem.Controllers
                         throw new InvalidOperationException("The location is not given!");
                     }
 
-                    meetup = context.Meetups
-                        .FirstOrDefault(
+                    //Currently we think min time for meetup is day, this can be changed with new requirement 
+                    meetup = context.Meetups.FirstOrDefault(
                         m => m.Location == location && m.Time.ToString("yyyymmdd") == time.DateTime.ToString("yyyymmdd"));
                 }
-            }
 
-            return this.NewtonsoftJson(meetup);
+                return this.NewtonsoftJson(meetup);
+            }
         }
 
         public ActionResult Create()
