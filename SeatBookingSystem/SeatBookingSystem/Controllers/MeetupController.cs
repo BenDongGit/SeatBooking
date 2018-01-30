@@ -21,6 +21,7 @@ namespace SeatBookingSystem.Controllers
         /// <param name="location">The meetup location</param>
         /// <param name="time">The meetup time</param>
         /// <returns>The meetup</returns>
+        [AllowAnonymous]
         public ActionResult Get(string location, DateTimeOffset time)
         {
             using (SeatBookingContext context = SeatBookingContext.Create())
@@ -46,9 +47,45 @@ namespace SeatBookingSystem.Controllers
             }
         }
 
-        public ActionResult Create()
+        /// <summary>
+        /// Creates the meetup
+        /// </summary>
+        /// <param name="location">The location.</param>
+        /// <param name="time">The time</param>
+        /// <returns>The meetup</returns>
+        public async Task<ActionResult> Create(string location, DateTimeOffset time)
         {
-            throw new NotImplementedException();
+            using (SeatBookingContext context = SeatBookingContext.Create())
+            {
+                var meetup = new Meetup
+                {
+                    Location = location,
+                    Time = time.DateTime,
+                };
+                context.Meetups.Add(meetup);
+
+                List<string> seatNames = new List<string>();
+                for (int c = 0; c < Consts.SeatRowNum; c++)
+                {
+                    for (int r = 1; r <= Consts.SeatRowNum; r++)
+                    {
+                        seatNames.Add(string.Format("{0}{1}", Consts.ColSeatNames[c], r));
+                    }
+                }
+
+                var seats = seatNames.Select(name =>
+                    new Seat
+                    {
+                        Name = name,
+                        MeetupId = meetup.Id
+                    }).ToList();
+
+                context.Seats.AddRange(seats);
+                context.SaveChanges();
+
+                await Task.FromResult(0).ConfigureAwait(false);
+                return new HttpStatusCodeResult(HttpStatusCode.OK);
+            }
         }
     }
 }
