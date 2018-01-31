@@ -66,8 +66,7 @@
         [AllowAnonymous]
         public async Task<ActionResult> GetAllBookedSeats(int meetupId = 0)
         {
-            return await lazyBookingContextHelper.Value
-                .CallWithTransactionAsync<ActionResult>(
+            return await lazyBookingContextHelper.Value.CallWithTransactionAsync<ActionResult>(
                 async context =>
                 {
                     var allBooked = new List<Seat>();
@@ -78,9 +77,9 @@
                         throw new InvalidOperationException("The meetup is not existing!");
                     }
 
-                    allBooked = meetup.Seats.Where(s => s.TransactionId != null).ToList();
+                    allBooked = meetup.Seats.Where(s => s.Owner != null).ToList();
 
-                    await Utils.RunAsync().ConfigureAwait(false);
+                    await Task.FromResult(0).ConfigureAwait(false);
                     return this.NewtonsoftJsonResult(allBooked);
 
                 }).ConfigureAwait(false);
@@ -94,8 +93,7 @@
         /// <returns>The booked seats of the accounter</returns>
         public async Task<ActionResult> GetUserBookedSeats(int meetupId = 0, string accounter = null)
         {
-            return await lazyBookingContextHelper.Value
-                .CallWithTransactionAsync<ActionResult>(
+            return await lazyBookingContextHelper.Value.CallWithTransactionAsync<ActionResult>(
                 async context =>
                 {
                     List<Seat> seats = new List<Seat>();
@@ -115,7 +113,7 @@
                             s => s.Transaction != null && s.Transaction.Accounter != null && s.Transaction.Accounter.UserName == user.UserName).ToList();
                     }
 
-                    await Utils.RunAsync().ConfigureAwait(false);
+                    await Task.FromResult(0).ConfigureAwait(false);
                     return this.NewtonsoftJsonResult(seats);
 
                 }).ConfigureAwait(false);
@@ -147,8 +145,7 @@
                 throw new InvalidOperationException("There are seats of missing at least the followings [Owner|Email]");
             }
 
-            return await lazyBookingContextHelper.Value
-                .CallWithTransactionAsync<ActionResult>(
+            return await lazyBookingContextHelper.Value.CallWithTransactionAsync<ActionResult>(
                 async context =>
                 {
                     var meetup = context.Meetups.FirstOrDefault(
@@ -185,9 +182,11 @@
                     {
                         Id = Guid.NewGuid(),
                         AccounterId = user.Id,
+                        Time = DateTime.Now
                     };
 
                     context.Set<Transaction>().Add(transaction);
+
                     seats.ForEach(s => s.TransactionId = transaction.Id);
                     seats.ForEach(s =>
                     {
@@ -200,10 +199,18 @@
 
                         context.Set<Owner>().Add(owner);
                         s.Owner = owner;
+                        var details = new
+                        {
+                            Owner = model.Owner,
+                            Seat = model.Name,
+                            MeetupId = meetup.Id
+                        };
+
+                        transaction.Details = details.ToJsonString();
                     });
 
                     context.SaveChanges();
-                    await Utils.RunAsync().ConfigureAwait(false);
+                    await Task.FromResult(0).ConfigureAwait(false);
                     return this.NoContent();
 
                 }).ConfigureAwait(false);
@@ -219,8 +226,7 @@
         [AllowAnonymous]
         public async Task<ActionResult> ReleaseSeats(string[] seatNames, int meetupId = 0, string accounter = null)
         {
-            return await lazyBookingContextHelper.Value
-                .CallWithTransactionAsync<ActionResult>(
+            return await lazyBookingContextHelper.Value.CallWithTransactionAsync<ActionResult>(
                 async context =>
                 {
                     var meetup = context.Meetups.FirstOrDefault(
@@ -245,7 +251,8 @@
                     }
 
                     context.SaveChanges();
-                    await Utils.RunAsync().ConfigureAwait(false);
+
+                    await Task.FromResult(0).ConfigureAwait(false);
                     return this.NoContent();
 
                 }).ConfigureAwait(false);

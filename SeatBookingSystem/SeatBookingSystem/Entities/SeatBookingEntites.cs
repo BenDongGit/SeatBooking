@@ -201,6 +201,16 @@
         public string AccounterId { get; set; }
 
         /// <summary>
+        /// The time of transation
+        /// </summary>
+        public DateTime Time { get; set; }
+
+        /// <summary>
+        /// The transaction details
+        /// </summary>
+        public string Details { get; set; }
+
+        /// <summary>
         /// The buyer
         /// </summary>
         public virtual User Accounter { get; set; }

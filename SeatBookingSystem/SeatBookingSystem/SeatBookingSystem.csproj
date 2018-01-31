@@ -178,7 +178,6 @@
     <Compile Include="Helper\DbContextHelper.cs" />
     <Compile Include="Helper\IDbContextHelper.cs" />
     <Compile Include="Infrastructure\NinjectDependencyResolver.cs" />
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="MvcExtensions\ExceptionHandlerAttribute.cs" />
     <Compile Include="Common\Consts.cs" />
     <Compile Include="MvcExtensions\ExceptionResult.cs" />

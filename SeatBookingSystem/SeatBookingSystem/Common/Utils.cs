@@ -19,13 +19,5 @@
         {
             return collections == null || !collections.Any();
         }
-
-        /// <summary>
-        /// Runs async
-        /// </summary>
-        public static async Task RunAsync()
-        {
-            await Task.FromResult(0).ConfigureAwait(false);
-        }
     }
 }
