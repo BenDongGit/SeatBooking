@@ -59,8 +59,12 @@
             },
             select: function (name) {
                 if ($scope.data.seats.booked.indexOf(name) > -1) {
-                    if ($scope.data.seats.selected.indexOf(name) < 0) {
+                    var index = $scope.data.seats.selected.indexOf(name);
+                    if (index < 0) {
                         $scope.data.seats.selected.push(name);
+                    }
+                    else {
+                        $scope.data.seats.selected.splice(index, 1);
                     }
                 }
             },
