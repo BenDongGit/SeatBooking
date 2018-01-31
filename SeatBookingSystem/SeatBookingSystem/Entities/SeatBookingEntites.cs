@@ -1,32 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.EntityFramework;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace SeatBookingSystem.Entities
+﻿namespace SeatBookingSystem.Entities
 {
+    using System;
+    using System.Collections.Generic;
+    using System.ComponentModel.DataAnnotations;
+    using System.Security.Claims;
+    using System.Threading.Tasks;
+
+    using Microsoft.AspNet.Identity;
+    using Microsoft.AspNet.Identity.EntityFramework;
+
     /// <summary>
     /// The user
     /// </summary>
     public class User : IdentityUser
     {
         /// <summary>
-        /// The User constructor.
+        /// Initializes a new instance of the <see cref="User"/> class
         /// </summary>
         public User()
             : base()
         {
-            Transactions = new List<Transaction>();
+            Transactions = new HashSet<Transaction>();
+            Meetups = new HashSet<Meetup>();
         }
+
+        /// <summary>
+        /// if set to <c>true</c> [Administror].
+        /// </summary>
+        public bool? IsAdministrator { get; set; }
 
         /// <summary>
         /// The seats
         /// </summary>
         public virtual ICollection<Transaction> Transactions { get; set; }
+
+        /// <summary>
+        /// The meetups
+        /// </summary>
+        public virtual ICollection<Meetup> Meetups { get; set; }
 
         /// <summary>
         /// Generates the user identity async.
@@ -45,12 +56,17 @@ namespace SeatBookingSystem.Entities
     public class Meetup
     {
         /// <summary>
-        /// The Meetup constructor
+        /// Initializes a new instance of the <see cref="Meetup"/> class
         /// </summary>
         public Meetup()
         {
-            this.Seats = new List<Seat>();
+            this.Seats = new HashSet<Seat>();
         }
+
+        /// <summary>
+        /// The creater identity
+        /// </summary>
+        public string createrId { get; set; }
 
         /// <summary>
         /// The meetup identiy
@@ -66,6 +82,11 @@ namespace SeatBookingSystem.Entities
         /// The meetup location.
         /// </summary>
         public string Location { get; set; }
+
+        /// <summary>
+        /// The creater.
+        /// </summary>
+        public virtual User Creater { get; set; }
 
         /// <summary>
         /// The seats
@@ -126,14 +147,14 @@ namespace SeatBookingSystem.Entities
     public class Owner
     {
         /// <summary>
-        /// The SeatOwner constructor
+        /// Initializes a new instance of the <see cref="Owner"/> class
         /// </summary>
         public Owner()
         {
-            this.Seats = new List<Seat>();
+            this.Seats = new HashSet<Seat>();
         }
 
-             /// <summary>
+        /// <summary>
         /// The meetup identiy
         /// </summary>
         public int? Id { get; set; }
@@ -162,7 +183,7 @@ namespace SeatBookingSystem.Entities
     public class Transaction
     {
         /// <summary>
-        /// The Transaction constructor
+        /// Initializes a new instance of the <see cref="Transaction"/> class
         /// </summary>
         public Transaction()
         {

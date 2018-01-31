@@ -1,11 +1,11 @@
-﻿using System;
-using System.Net;
-using System.Net.Mime;
-using System.Web;
-using System.Web.Mvc;
-
-namespace SeatBookingSystem.Common
+﻿namespace SeatBookingSystem.MvcExtensions
 {
+    using System;
+    using System.Net;
+    using System.Net.Mime;
+    using System.Web;
+    using System.Web.Mvc;
+
     /// <summary>
     /// The exception result
     /// </summary>

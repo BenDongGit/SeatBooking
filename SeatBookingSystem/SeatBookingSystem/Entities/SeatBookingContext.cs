@@ -1,9 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.Entity;
-using Microsoft.AspNet.Identity.EntityFramework;
-
-namespace SeatBookingSystem.Entities
+﻿namespace SeatBookingSystem.Entities
 {
+    using System.ComponentModel.DataAnnotations.Schema;
+    using System.Data.Entity;
+
+    using Microsoft.AspNet.Identity.EntityFramework;
+
     /// <summary>
     /// The entities of seat booking 
     /// </summary>
@@ -26,17 +27,41 @@ namespace SeatBookingSystem.Entities
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<Seat>().HasKey(t => t.Id).Property(t=>t.Name).IsRequired();
-            //builder.Entity<Seat>().Property(t => t.OwnerId).IsOptional();
-            //builder.Entity<Seat>().Property(t => t.TransactionId).IsOptional();
-            builder.Entity<Seat>().Property(t => t.Id).HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
             builder.Entity<Transaction>().HasKey(t => t.Id);
-            builder.Entity<Meetup>().HasKey(t => t.Id).Property(t => t.Id).HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
-            builder.Entity<Owner>().HasKey(t => t.Id).Property(t => t.Id).HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
-            builder.Entity<Transaction>().HasOptional(t => t.Accounter).WithMany(t => t.Transactions).HasForeignKey(t => t.AccounterId);
-            builder.Entity<Seat>().HasOptional(t => t.Owner).WithMany(t => t.Seats).HasForeignKey(t => t.OwnerId);
-            builder.Entity<Seat>().HasOptional(t => t.Transaction).WithMany(t => t.Seats).HasForeignKey(t => t.TransactionId);
-            builder.Entity<Seat>().HasRequired(t => t.Meetup).WithMany(t => t.Seats).HasForeignKey(t => t.MeetupId);
+            builder.Entity<Seat>().HasKey(t => t.Id)
+                                  .Property(t=>t.Name)
+                                  .IsRequired();
+
+            builder.Entity<Meetup>().HasKey(t => t.Id)
+                                    .Property(t => t.Id)
+                                    .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
+
+            builder.Entity<Owner>().HasKey(t => t.Id)
+                                   .Property(t => t.Id)
+                                   .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
+
+            builder.Entity<Seat>().Property(t => t.Id)
+                                  .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);
+
+            builder.Entity<Meetup>().HasOptional(t => t.Creater)
+                                    .WithMany(t => t.Meetups)
+                                    .HasForeignKey(t => t.createrId);
+
+            builder.Entity<Transaction>().HasOptional(t => t.Accounter)
+                                         .WithMany(t => t.Transactions)
+                                         .HasForeignKey(t => t.AccounterId);
+
+            builder.Entity<Seat>().HasOptional(t => t.Owner)
+                                  .WithMany(t => t.Seats)
+                                  .HasForeignKey(t => t.OwnerId);
+
+            builder.Entity<Seat>().HasOptional(t => t.Transaction)
+                                  .WithMany(t => t.Seats)
+                                  .HasForeignKey(t => t.TransactionId);
+
+            builder.Entity<Seat>().HasRequired(t => t.Meetup)
+                                  .WithMany(t => t.Seats)
+                                  .HasForeignKey(t => t.MeetupId);
         }
 
         /// <summary>

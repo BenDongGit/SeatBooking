@@ -1,10 +1,11 @@
-﻿using System.Net;
-using System.Net.Mime;
-using System.Web.Mvc;
-using SeatBookingSystem.Common;
-
-namespace SeatBookingSystem.Attributes
+﻿namespace SeatBookingSystem.MvcExtensions
 {
+    using System.Net;
+    using System.Net.Mime;
+    using System.Web.Mvc;
+
+    using SeatBookingSystem.Common;
+
     /// <summary>
     /// The exception handler attribute
     /// </summary>

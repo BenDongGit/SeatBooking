@@ -1,30 +1,43 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using System.Web.Mvc;
-using SeatBookingSystem.Attributes;
-using SeatBookingSystem.Common;
-using SeatBookingSystem.Entities;
-using SeatBookingSystem.Models;
-
-namespace SeatBookingSystem.Controllers
+﻿namespace SeatBookingSystem.Controllers
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net;
+    using System.Threading.Tasks;
+    using System.Web.Mvc;
+
+    using SeatBookingSystem.Common;
+    using SeatBookingSystem.Entities;
+    using SeatBookingSystem.MvcExtensions;
+    using SeatBookingSystem.Helper;
+
     [Authorize]
+    [ExceptionHandler]
     public class MeetupController : Controller
     {
+        private Lazy<IDbContextHelper<SeatBookingContext>> lazyBookingContextHelper;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SeatController"/> class
+        /// </summary>
+        public MeetupController(IDbContextHelper<SeatBookingContext> bookingContextHelper)
+        {
+            lazyBookingContextHelper = new Lazy<IDbContextHelper<SeatBookingContext>>(() => bookingContextHelper);
+        }
+
         /// <summary>
         /// Gets the meet up
         /// </summary>
         /// <param name="location">The meetup location</param>
         /// <param name="time">The meetup time</param>
         /// <returns>The meetup</returns>
+        [HttpGet]
         [AllowAnonymous]
-        public ActionResult Get(string location, DateTimeOffset time)
+        public async Task<ActionResult> Get(string location, DateTimeOffset time)
         {
-            using (SeatBookingContext context = SeatBookingContext.Create())
+            return await lazyBookingContextHelper.Value.CallWithTransactionAsync<ActionResult>(
+            async context =>
             {
                 var meetup = default(Meetup);
                 if (!string.IsNullOrEmpty(location) && location == Consts.DefaultMeetupLocation)
@@ -38,13 +51,15 @@ namespace SeatBookingSystem.Controllers
                         throw new InvalidOperationException("The location is not given!");
                     }
 
-                    //Currently we think min time for meetup is day, this can be changed with new requirement 
+                    //Currently we set the min time of meetup is day, this can be changed with new requirement 
                     meetup = context.Meetups.FirstOrDefault(
                         m => m.Location == location && m.Time.ToString("yyyymmdd") == time.DateTime.ToString("yyyymmdd"));
                 }
 
-                return this.NewtonsoftJson(meetup);
-            }
+                await Utils.RunAsync().ConfigureAwait(false);
+                return this.NewtonsoftJsonResult(meetup);
+
+            }).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -52,40 +67,55 @@ namespace SeatBookingSystem.Controllers
         /// </summary>
         /// <param name="location">The location.</param>
         /// <param name="time">The time</param>
+        /// <param name="creater">The creater</param>
+        /// <param name="row">The seat rows of meetup.</param>
+        /// <param name="col">The seat cols of meetup.</param>
         /// <returns>The meetup</returns>
-        public async Task<ActionResult> Create(string location, DateTimeOffset time)
+        [HttpPost]
+        [AllowAnonymous]
+        public async Task<ActionResult> Create(string location, DateTimeOffset time, string creater, int row = 0, int col = 0)
         {
-            using (SeatBookingContext context = SeatBookingContext.Create())
+            if (string.IsNullOrEmpty(creater))
+            {
+                throw new InvalidOperationException("The meetup should be created by administrator");
+            }
+
+            if (col > Consts.MaxRowNum)
+            {
+                throw new InvalidOperationException(string.Format("No more than [{0}] seat rows can be created", Consts.MaxRowNum));
+            }
+
+            return await lazyBookingContextHelper
+                .Value.CallWithTransactionAsync<ActionResult>(async context =>
             {
                 var meetup = new Meetup
                 {
                     Location = location,
                     Time = time.DateTime,
                 };
+
                 context.Meetups.Add(meetup);
 
+                row = row == 0 ? Consts.SeatRowNum : row;
+                col = col == 0 ? Consts.SeatColNum : col;
                 List<string> seatNames = new List<string>();
-                for (int c = 0; c < Consts.SeatRowNum; c++)
+                for (int c = 0; c < col; c++)
                 {
-                    for (int r = 1; r <= Consts.SeatRowNum; r++)
+                    for (int r = 1; r <= row; r++)
                     {
                         seatNames.Add(string.Format("{0}{1}", Consts.ColSeatNames[c], r));
                     }
                 }
 
                 var seats = seatNames.Select(name =>
-                    new Seat
-                    {
-                        Name = name,
-                        MeetupId = meetup.Id
-                    }).ToList();
-
+                new Seat { Name = name, MeetupId = meetup.Id }).ToList();
                 context.Seats.AddRange(seats);
                 context.SaveChanges();
 
-                await Task.FromResult(0).ConfigureAwait(false);
+                await Utils.RunAsync().ConfigureAwait(false);
                 return new HttpStatusCodeResult(HttpStatusCode.OK);
-            }
+
+            }).ConfigureAwait(false);
         }
     }
 }

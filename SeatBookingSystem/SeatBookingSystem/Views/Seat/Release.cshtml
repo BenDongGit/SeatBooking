@@ -1,46 +1,19 @@
 ﻿@{
-    ViewBag.Title = "Seat Booking";
+    ViewBag.Title = "Release Seat";
 }
-<style>
-    .seat {
-        display: inline-block;
-        font-size: 1.5em;
-        width: 50px;
-        height: 50px;
-        margin: 6px;
-        white-space: nowrap;
-        text-align: center;
-        padding-top: 10px;
-        border: solid 1px;
-        cursor: pointer;
-        border-radius: 4px;
-    }
 
-    .booked {
-        background-color: green;
-        cursor: default;
-    }
-
-    .selected {
-        background-color: #ccc;
-        cursor: default;
-    }
-
-</style>
-
-<div ng-controller="seatReleasingController" class="row" style="margin-top:80px">
-    <div class="col-lg-2">
-        <h4>{{data.seats.tip}}</h4>
-    </div>
-    <div class="col-lg-6">
+<div ng-controller="seatReleasingController" style="width:100%">
+    <div class="seats-container">
         <div ng-repeat="rows in seats">
             <div class="row">
-                <span ng-repeat="name in rows" class="seat" ng-class="{'booked': data.seats.isBooked(name), 'selected': data.seats.isSelected(name)}" ng-click="data.seats.select(name)">
+                <span ng-repeat="name in rows" class="seat" ng-class="{'booked-release': data.seats.isBooked(name), 'selected-release': data.seats.isSelected(name)}" ng-click="data.seats.select(name)">
                     {{name}}
                 </span>
             </div>
         </div>
-        <div class="row" style="float:right; margin-right:20px; margin-top:20px">
+        <h4 class="text-warning">You have {{data.seats.booked.length}} seats to release!</h4>
+        <div class="row" style="float:right; margin-right:60px">
+          
             @Html.ActionLink("Book Page", "Book", "Seat", routeValues: null, htmlAttributes: new { @class = "btn btn-default" })
             <div class="btn btn-primary" ng-click="data.seats.release()">Release</div>
         </div>

@@ -22,3 +22,46 @@ select,
 textarea {
     max-width: 280px;
 }
+
+.seats-container {
+    width: 600px;
+    height: 500px;
+    margin: 50px auto;
+    display: block;
+    max-width: 100%;
+}
+
+.seat {
+    display: inline-block;
+    font-size: 1.5em;
+    width: 50px;
+    height: 50px;
+    margin: 6px;
+    white-space: nowrap;
+    text-align: center;
+    padding-top: 10px;
+    border: solid 1px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.booked-release {
+    background-color: green;
+    cursor: default;
+}
+
+
+.booked-book {
+    background-color: #f03d37;
+    cursor: default;
+}
+
+.selected-book {
+    background-color: green;
+    cursor: default;
+}
+
+.selected-release {
+    background-color: #ccc;
+    cursor: default;
+}

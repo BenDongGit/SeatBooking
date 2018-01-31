@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace SeatBookingSystem.Common
+﻿namespace SeatBookingSystem.Common
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Web;
+
     public class Consts
     {
         public static string[] ColSeatNames = new string[] 
@@ -15,6 +15,8 @@ namespace SeatBookingSystem.Common
         public static int SeatRowNum = 10;
 
         public static int SeatColNum = 10;
+
+        public static int MaxRowNum = 26;
 
         public static int MaxCountOfOneTransaction = 4;
 

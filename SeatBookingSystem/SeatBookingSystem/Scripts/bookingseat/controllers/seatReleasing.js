@@ -2,7 +2,6 @@
     $scope.seats = meetup.seats;
     $scope.data = {
         seats: {
-            tip:"",
             booked: [],
             selected: [],
             getUserBookedSeats: function () {
@@ -41,7 +40,12 @@
                         meetupId: 0
                     }).then(
                     function (response) {
-                        $scope.data.seats.destory();
+                        $scope.data.seats.selected.map(function (selected, index) {
+                            if ($scope.data.seats.booked.indexOf(selected) > -1) {
+                                $scope.data.seats.booked.splice(index - 1, 1);
+                            }
+                        });
+                        $scope.data.seats.selected = [];
                         alert("Successfully released!");
                     }, function (error) {
                         alert(error.data);

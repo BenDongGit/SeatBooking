@@ -1,18 +1,19 @@
-﻿using System;
-using System.Globalization;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Web;
-using System.Web.Mvc;
-using Microsoft.AspNet.Identity;
-using Microsoft.AspNet.Identity.Owin;
-using Microsoft.Owin.Security;
-using SeatBookingSystem.Models;
-using SeatBookingSystem.Entities;
-
-namespace SeatBookingSystem.Controllers
+﻿namespace SeatBookingSystem.Controllers
 {
+    using System;
+    using System.Globalization;
+    using System.Linq;
+    using System.Security.Claims;
+    using System.Threading.Tasks;
+    using System.Web;
+    using System.Web.Mvc;
+
+    using Microsoft.AspNet.Identity;
+    using Microsoft.AspNet.Identity.Owin;
+    using Microsoft.Owin.Security;
+    using SeatBookingSystem.Models;
+    using SeatBookingSystem.Entities;
+
     [Authorize]
     public class AccountController : Controller
     {

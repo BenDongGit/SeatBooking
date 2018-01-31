@@ -1,81 +1,59 @@
 ﻿@{
-    ViewBag.Title = "Seat Booking";
+    ViewBag.Title = "Book Seat";
 }
-<style>
-    .seat {
-        display: inline-block;
-        font-size: 1.5em;
-        width: 50px;
-        height: 50px;
-        margin: 6px;
-        white-space: nowrap;
-        text-align: center;
-        padding-top: 10px;
-        border: solid 1px;
-        cursor: pointer;
-        border-radius: 4px;
-    }
 
-    .booked {
-        background-color: #f03d37;
-        cursor: default;
-    }
-
-    .selected {
-        background-color: green;
-        cursor: default;
-    }
-
-</style>
-
-<div ng-controller="seatBookingController" class="row" style="margin-top:50px">
-    <div class="col-lg-2"></div>
-    <div class="col-lg-6">
+<div ng-controller="seatBookingController" style="width:100%">
+    <div class="seats-container">
         <div ng-repeat="rows in seats">
             <div class="row">
-                <span ng-repeat="name in rows" class="seat" ng-class="{'booked': data.seats.isBooked(name), 'selected': data.seats.isSelected(name)}" ng-click="data.seats.initInput(name)">
+                <span ng-repeat="name in rows" class="seat" ng-class="{'booked-book': data.seats.isBooked(name), 'selected-book': data.seats.isSelected(name)}" ng-click="data.seats.initInput(name)">
                     {{name}}
                 </span>
             </div>
         </div>
-        <div class="row" style="float:right; margin-right:20px; margin-top:20px">
+        <h4 class="text-warning">You have booked {{data.seats.booked.length}} seats!</h4>
+        <div class="row" style="float:right; margin-right:60px">
             @Html.ActionLink("Release Page", "Release", "Seat", routeValues: null, htmlAttributes: new { @class = "btn btn-default" })
             <div class="btn btn-primary" ng-click="data.seats.book()">Book</div>
         </div>
     </div>
-    <div class="modal fade select-seat-modal" tabindex="-1" role="dialog" aria-labelledby="selectSeat" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-lg-12">
-                                <div class="col-lg-12">
-                                    <form class="form-horizontal" ng-submit="data.seats.addSelected()">
-                                        <div class="form-group">
-                                            <label class="control-label col-lg-2">Seat:</label>
-                                            <div class="col-lg-10">
-                                                <input class="form-control" type="text" ng-model="data.seatInput.name" ng-disabled="true" />
-                                            </div>
+    <div class="row">
+        <div class="col-lg-11">
+            <div class="modal fade select-seat-modal modal-open" tabindex="-1" role="dialog" aria-labelledby="selectSeat" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-lg-12">
+                                        <div class="col-lg-12">
+                                            <form class="form-horizontal" ng-submit="data.seats.addSelected()">
+                                                <div class="form-group">
+                                                    <label class="control-label col-lg-2">Seat:</label>
+                                                    <div class="col-lg-10">
+                                                        <input class="form-control" type="text" ng-model="data.seatInput.name" ng-disabled="true" />
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="control-label col-lg-2">Owner:</label>
+                                                    <div class="col-lg-10">
+                                                        <input class="form-control" type="text" ng-model="data.seatInput.owner" required />
+                                                    </div>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="control-label col-lg-2">Email:</label>
+                                                    <div class="col-lg-10">
+                                                        <input class="form-control" type="email" ng-model="data.seatInput.email" required />
+                                                    </div>
+                                                </div>
+                                                <div style="color:#337ab7; font-size:1.2em; text-align:center; float:right; margin-top:5px; cursor:pointer">
+                                                    <button type="submit" class="btn btn-default">
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            </form>
                                         </div>
-                                        <div class="form-group">
-                                            <label class="control-label col-lg-2">Owner:</label>
-                                            <div class="col-lg-10">
-                                                <input class="form-control" type="text" ng-model="data.seatInput.owner" required />
-                                            </div>
-                                        </div>
-                                        <div class="form-group">
-                                            <label class="control-label col-lg-2">Email:</label>
-                                            <div class="col-lg-10">
-                                                <input class="form-control" type="email" ng-model="data.seatInput.email" required />
-                                            </div>
-                                        </div>
-                                        <div style="color:#337ab7; font-size:1.2em; text-align:center; float:right; margin-top:5px; cursor:pointer">
-                                            <button type="submit" class="btn btn-default">
-                                                Add
-                                            </button>
-                                        </div>
-                                    </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>

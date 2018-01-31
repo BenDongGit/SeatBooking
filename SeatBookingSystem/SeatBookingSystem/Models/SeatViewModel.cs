@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-namespace SeatBookingSystem.Models
+﻿namespace SeatBookingSystem.Models
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Web;
+
     /// <summary>
     /// The seat view model
     /// </summary>
