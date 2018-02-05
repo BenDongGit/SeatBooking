@@ -196,9 +196,9 @@
         public Guid? Id { get; set; }
 
         /// <summary>
-        /// The accounter identity.
+        /// The buyer identity.
         /// </summary>
-        public string AccounterId { get; set; }
+        public string BuyerId { get; set; }
 
         /// <summary>
         /// The time of transation
@@ -213,7 +213,7 @@
         /// <summary>
         /// The buyer
         /// </summary>
-        public virtual User Accounter { get; set; }
+        public virtual User Buyer { get; set; }
 
         /// <summary>
         /// The seats

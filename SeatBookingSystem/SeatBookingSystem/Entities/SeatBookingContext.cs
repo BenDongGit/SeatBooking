@@ -29,7 +29,7 @@
 
             builder.Entity<Transaction>().HasKey(t => t.Id);
             builder.Entity<Seat>().HasKey(t => t.Id)
-                                  .Property(t=>t.Name)
+                                  .Property(t => t.Name)
                                   .IsRequired();
 
             builder.Entity<Meetup>().HasKey(t => t.Id)
@@ -47,9 +47,9 @@
                                     .WithMany(t => t.Meetups)
                                     .HasForeignKey(t => t.createrId);
 
-            builder.Entity<Transaction>().HasOptional(t => t.Accounter)
+            builder.Entity<Transaction>().HasOptional(t => t.Buyer)
                                          .WithMany(t => t.Transactions)
-                                         .HasForeignKey(t => t.AccounterId);
+                                         .HasForeignKey(t => t.BuyerId);
 
             builder.Entity<Seat>().HasOptional(t => t.Owner)
                                   .WithMany(t => t.Seats)

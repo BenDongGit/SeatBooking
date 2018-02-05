@@ -88,10 +88,11 @@
         /// <summary>
         /// Gets the current user booked seats.
         /// </summary>
-        /// <param name="accounter">The accounter name.</param>
         /// <param name="meetupId">The meetup identity</param>
+        /// <param name="buyer">The buyer.</param>
         /// <returns>The booked seats of the accounter</returns>
-        public async Task<ActionResult> GetUserBookedSeats(int meetupId = 0, string accounter = null)
+        [AllowAnonymous]
+        public async Task<ActionResult> GetUserBookedSeats(string buyer, int meetupId = 0)
         {
             return await lazyBookingContextHelper.Value.CallWithTransactionAsync<ActionResult>(
                 async context =>
@@ -104,13 +105,13 @@
                         throw new InvalidOperationException("The meetup is not existing!");
                     }
 
-                    var user = !string.IsNullOrEmpty(accounter) ?
-                        context.Users.FirstOrDefault(u => u.UserName == accounter) : GetCurrentUser();
+                    var user = !string.IsNullOrEmpty(buyer) ?
+                        context.Users.FirstOrDefault(u => u.UserName == buyer) : GetCurrentUser();
 
                     if (user != null)
                     {
                         seats = meetup.Seats.Where(
-                            s => s.Transaction != null && s.Transaction.Accounter != null && s.Transaction.Accounter.UserName == user.UserName).ToList();
+                            s => s.Transaction != null && s.Transaction.Buyer != null && s.Transaction.Buyer.UserName == user.UserName).ToList();
                     }
 
                     await Task.FromResult(0).ConfigureAwait(false);
@@ -123,12 +124,12 @@
         /// Books the seats.
         /// </summary>
         /// <param name="models">The seats.</param>
+        /// <param name="buyer">The buyer.</param>
         /// <param name="meetupId">The meetup identity.</param>
-        /// <param name="accounter">The accounter name.</param>
         /// <returns>The seats booking result</returns>
         [HttpPost]
         [AllowAnonymous]
-        public async Task<ActionResult> BookSeats(SeatViewModel[] models, int meetupId = 0, string accounter = null)
+        public async Task<ActionResult> BookSeats(SeatViewModel[] models, string buyer, int meetupId = 0)
         {
             if (models.IsNullOrEmpty())
             {
@@ -171,8 +172,8 @@
                         throw new InvalidOperationException(errorMsg);
                     }
 
-                    var user = !string.IsNullOrEmpty(accounter) ?
-                                   context.Users.FirstOrDefault(u => u.UserName == accounter) : GetCurrentUser();
+                    var user = !string.IsNullOrEmpty(buyer) ?
+                                   context.Users.FirstOrDefault(u => u.UserName == buyer) : GetCurrentUser();
                     if (user == null)
                     {
                         throw new InvalidOperationException("Can't book seat since the accounter is not valid!");
@@ -181,7 +182,7 @@
                     var transaction = new Transaction
                     {
                         Id = Guid.NewGuid(),
-                        AccounterId = user.Id,
+                        BuyerId = user.Id,
                         Time = DateTime.Now
                     };
 

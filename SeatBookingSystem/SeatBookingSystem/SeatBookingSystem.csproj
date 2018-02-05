@@ -178,6 +178,11 @@
     <Compile Include="Helper\DbContextHelper.cs" />
     <Compile Include="Helper\IDbContextHelper.cs" />
     <Compile Include="Infrastructure\NinjectDependencyResolver.cs" />
+    <Compile Include="Migrations\201802050911414_refactir.cs" />
+    <Compile Include="Migrations\201802050911414_refactir.Designer.cs">
+      <DependentUpon>201802050911414_refactir.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="MvcExtensions\ExceptionHandlerAttribute.cs" />
     <Compile Include="Common\Consts.cs" />
     <Compile Include="MvcExtensions\ExceptionResult.cs" />
@@ -320,6 +325,11 @@
     <Content Include="fonts\glyphicons-halflings-regular.ttf" />
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
     <Content Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201802050911414_refactir.resx">
+      <DependentUpon>201802050911414_refactir.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
