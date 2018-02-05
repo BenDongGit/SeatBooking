@@ -259,7 +259,7 @@
         }
 
         /// <summary>
-        /// Initialize the seats, this is only for test user, and this can be removed after the feature to create meetup released
+        /// Initialize the seats, this is only for test use, and this can be removed after the feature to create meetup released
         /// </summary>
         /// <returns>The seats</returns>
         private void InitializeTestSeats()
