@@ -10,7 +10,7 @@
     using Newtonsoft.Json.Serialization;
 
     /// <summary>
-    /// The dashboard helper
+    /// The common helper
     /// </summary>
     public static class CommonHelper
     {
